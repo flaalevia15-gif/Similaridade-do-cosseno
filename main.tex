@@ -1,0 +1,179 @@
+\documentclass[12pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[portuguese]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath} % Para a fórmula de similaridade de cosseno
+\usepackage{amssymb}
+\usepackage{geometry} % Para configurar as margens
+\usepackage{booktabs} % Para tabelas com melhor visual
+\usepackage{longtable} % Para tabelas que podem quebrar páginas
+\usepackage{fancyhdr} % Para cabeçalhos
+
+% Configuração das Margens
+\geometry{
+ a4paper,
+ margin=2.5cm,
+}
+
+% Título do Relatório
+\title{\vspace{-2cm} \textbf{RELATÓRIO TÉCNICO DE SISTEMA DE RECOMENDAÇÃO} \\ \large Utilização da Similaridade de Cosseno na Análise de Conteúdo Fílmico}
+\author{Flavia Barbosa}
+\date{Novembro de 2025}
+
+\begin{document}
+
+% Cabeçalho e Informações da Instituição
+\begin{titlepage}
+    \centering
+    {\Large \textbf{FATEC BAIXADA SANTISTA - FACULDADE DE TECNOLOGIA - RUBENS LARA} \\}
+    \vspace{4cm}
+
+    {\Large \textbf{SISTEMA DE RECOMENDAÇÃO DE FILMES} \\}
+    \vspace{0.5cm}
+    {\Large Aplicação das Métricas TF-IDF e Similaridade de Cosseno}
+    \vspace{6cm}
+
+    {\Large Flávia Barbosa \\}
+    {\Large Ciclo 2 - Ciência de Dados \\}
+    \vspace{8cm}
+
+    {\Large Santos, SP \\}
+    {\Large Novembro de 2025}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% --- CORPO DO RELATÓRIO ---
+
+\section{Resumo}
+Este projeto implementa um Sistema de Recomendação Baseado em Conteúdo utilizando a métrica de \textbf{Similaridade de Cosseno} e a técnica de vetorização \textbf{TF-IDF}. O objetivo é mapear o perfil de preferência textual do usuário (\textit{Query}) em um espaço vetorial de alta dimensão e calcular sua proximidade angular com uma base filtrada de filmes do TMDB (\textit{The Movie Database}). Após um rigoroso processo de ETL (Extração, Transformação e Carga) e filtragem por qualidade, idioma, duração e data, a base final utilizada para análise contém \textbf{30.612 títulos}. O teste aplicado demonstrou a eficácia do modelo em correlacionar perfis complexos ("Filmes de Super-Heróis") com \textit{blockbusters} relevantes do universo cinematográfico.
+
+\section{Introdução e Fundamentação Teórica}
+
+\subsection{Objetivo do Projeto}
+O principal objetivo deste trabalho é desenvolver e validar um sistema de recomendação de filmes. O sistema deve ser capaz de transformar um perfil de preferência textual fornecido pelo usuário (a \textit{Query}) em um vetor numérico e, subsequentemente, ranquear os filmes mais semanticamente semelhantes em uma grande base de dados, utilizando a distância angular entre os vetores.
+
+\subsection{Similaridade de Cosseno (\textit{Cosine Similarity})}
+A Similaridade de Cosseno é uma métrica fundamental da Álgebra Linear utilizada para medir o quão parecidas são a \textbf{direção} de dois vetores em um espaço multidimensional. No contexto do Processamento de Linguagem Natural (NLP), ela mede a similaridade de conteúdo semântico entre dois documentos, ignorando o tamanho do documento.
+
+A métrica é definida pelo cosseno do ângulo ($\theta$) entre o Vetor da Query ($\mathbf{Q}$) e o Vetor do Documento ($\mathbf{D}$):
+
+\begin{equation}
+\label{eq:cosine_similarity}
+\text{Similaridade}(\mathbf{Q}, \mathbf{D}) = \cos(\theta) = \frac{\mathbf{Q} \cdot \mathbf{D}}{\|\mathbf{Q}\| \cdot \|\mathbf{D}\|}
+\end{equation}
+
+Uma Similaridade ($\mathbf{S}$) próxima de \textbf{1} indica um ângulo $\theta$ próximo de $0^\circ$, significando alta similaridade. Um $\mathbf{S}$ próximo de \textbf{0} indica baixa similaridade.
+
+\subsection{TF-IDF (\textit{Term Frequency-Inverse Document Frequency})}
+TF-IDF é a técnica de vetorização que transforma o texto em um formato numérico. Ela pondera a importância de uma palavra em um documento em relação a todo o \textit{Corpus} (a base de dados de filmes). O \textit{Term Frequency} (TF) mede a frequência da palavra no documento, enquanto o \textit{Inverse Document Frequency} (IDF) penaliza palavras que aparecem em muitos documentos, valorizando termos raros e específicos que ajudam a diferenciar o conteúdo. A combinação resulta em vetores que representam a \textbf{importância semântica} das palavras.
+
+\section{Metodologia}
+
+\subsection{Origem e Adaptação da Base de Dados}
+
+O \textit{Corpus} foi construído a partir do \textbf{TMDB Movies Dataset} do Kaggle.
+
+\begin{itemize}
+    \item \textbf{Fonte:} TMDB (The Movie Database).
+    \item \textbf{Dataset Carregado:} \texttt{asaniczka/tmdb-movies-dataset-2023-930k-movies}.
+    \item \textbf{Arquivo Utilizado:} \texttt{TMDB\_movie\_dataset\_v11.csv}.
+\end{itemize}
+
+As colunas carregadas foram: \texttt{title}, \texttt{overview}, \texttt{keywords}, \texttt{genres}, \texttt{tagline}, \texttt{vote\_average}, \texttt{runtime}, \texttt{adult}, \texttt{release\_date}, e \texttt{original\_language}.
+
+\subsection{Transformação (Filtros e Limpeza)}
+A Transformação (\textit{T} do ETL) foi crucial para criar um \textit{Corpus} de alta qualidade.
+
+\begin{longtable}{p{2cm}p{5.5cm}p{7cm}}
+\caption{Filtros Aplicados e Justificativas}\\
+\toprule
+\textbf{Filtro} & \textbf{Condição} & \textbf{Justificativa} \\
+\midrule
+\endfirsthead % Início do cabeçalho de repetição
+
+\multicolumn{3}{c}{\textbf{Tabela 1 (Continuação):} Filtros Aplicados e Justificativas} \\
+\toprule
+\textbf{Filtro} & \textbf{Condição} & \textbf{Justificativa} \\
+\midrule
+\endhead % Fim do cabeçalho de repetição
+
+Qualidade & $\texttt{vote\_average} > 6.0$ & Garante a recomendação de filmes com avaliação média razoável, elevando a qualidade percebida. \\
+\midrule
+Duração & $\texttt{runtime} > 60$ & Remove curtas-metragens e \textit{trailers}, focando apenas em filmes de longa-metragem (acima de 1 hora). \\
+\midrule
+Relevância Temporal & $\texttt{release\_year} \ge 1995$ & Foca a base em conteúdo mais recente (pós-1995), com maior completude de metadados e relevância atual. \\
+\midrule
+Idioma do Conteúdo & $\texttt{original\_language} == 'en'$ & \textbf{CRUCIAL para o NLP:} Alinha o idioma do \textit{Corpus} com o idioma da \textit{Query} (\texttt{english}), validando a comparação vetorial do TF-IDF. \\
+\midrule
+Censura & $\texttt{adult} == \text{False}$ & Exclui filmes classificados como conteúdo adulto, padronizando a classificação do filme recomendado. \\
+\bottomrule
+\end{longtable}
+
+Após os filtros e a limpeza inicial dos dados nulos:
+\begin{itemize}
+    \item \textbf{Feature Engineering:} A coluna \texttt{features} foi criada pela concatenação de \texttt{overview} + \texttt{keywords} + \texttt{genres} + \texttt{tagline}.
+    \item \textbf{Limpeza de Texto:} Foi aplicada uma função de remoção de caracteres não-ASCII (\textit{e.g.}, acentos e caracteres latinos especiais) e transformação para minúsculas, garantindo que o texto da base fosse limpo e homogêneo.
+\end{itemize}
+
+A base final utilizada para análise (carga) resultou em \textbf{30.612 títulos} de alta qualidade e relevância.
+
+\subsection{Preparação da Query e Simetria}
+O texto de perfil de preferência do usuário (\textit{Query}) é processado simetricamente à base de dados: é submetido à mesma função de limpeza (\texttt{remove\_non\_ascii}) antes de ser adicionado ao \textit{Corpus}.
+
+\subsection{Vetorização e Parâmetros}
+O \textit{Corpus} (Query + 30.612 Filmes) é transformado pela classe \texttt{TfidfVectorizer} com os seguintes parâmetros para otimizar o resultado:
+\begin{itemize}
+    \item \texttt{stop\_words='english'}: Remove palavras comuns do idioma que não possuem valor semântico.
+    \item \texttt{lowercase=True}: Remove a distinção entre maiúsculas e minúsculas.
+    \item \texttt{token\_pattern=r'\textbackslash b\textbackslash w+\textbackslash b'}: Garante a remoção de pontuação e considera apenas sequências alfanuméricas como \textit{tokens}.
+\end{itemize}
+
+\subsection{Cálculo da Similaridade}
+A matriz de \textit{cosine similarity} é calculada entre o \textbf{vetor da Query} e todos os \textbf{vetores dos filmes}, resultando em um \textit{array} de pontuações de $\mathbf{S}$ (similaridade). O ranqueamento é feito ordenando os filmes por $\mathbf{S}$ em ordem decrescente (do mais semelhante para o menos semelhante).
+
+\section{Análise de Resultados}
+
+\subsection{Teste Aplicado: Perfil de Super-Heróis}
+O teste foi realizado utilizando uma \textit{Query} focada em filmes de ação de Super-Heróis, com alta repetição de termos-chave para garantir um vetor dominante.
+
+\begin{verbatim}
+Query: I am looking for a superhero action film with massive scale and a 
+focus on team dynamics. The plot must involve powerful heroes uniting 
+to fight a global threat or a cosmic villain. Key elements include 
+spectacular visual effects, epic battles, and complex interconnected 
+storylines within a shared universe. I prefer films about superpowers, 
+advanced technology, and saving the world, mixed with humor and 
+emotional stakes. The film should explore teamwork, sacrifice, and the 
+burden of heroism.
+\end{verbatim}
+
+\subsection{Ranking de Recomendação (TOP 5)}
+O modelo gerou o seguinte ranqueamento, que valida a correlação semântica entre a \textit{Query} e as descrições dos filmes:
+
+\begin{center}
+\begin{tabular}{cccc}
+\toprule
+\textbf{Rank} & \textbf{Filme} & \textbf{Similaridade (S)} & \textbf{Ângulo ($\mathbf{\theta}$) (Graus)} \\
+\midrule
+1 & Spider-Man: No Way Home & 0.159903 & 80.798727 \\
+2 & Zack Snyder's Justice League & 0.155047 & 81.080503 \\
+3 & Batman and Harley Quinn & 0.133499 & 82.328149 \\
+4 & Cyberworld - The future is now & 0.131263 & 82.457394 \\
+5 & Nirbhay & 0.125340 & 82.799585 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Discussão dos Resultados}
+O ranqueamento demonstra a eficácia do sistema:
+\begin{itemize}
+    \item Os filmes de maior similaridade (Rank 1 e 2) são títulos proeminentes de Super-Heróis (\textit{Spider-Man} e \textit{Justice League}), que possuem alto conteúdo textual em relação aos termos \textit{superhero}, \textit{team dynamics} e \textit{global threat}.
+    \item O ranqueamento é preciso: o filme mais relevante para o gênero obteve o $\mathbf{S}$ mais alto ($\approx 0.16$), que corresponde ao \textbf{menor ângulo} ($\approx 80.80^\circ$), provando que seu vetor é o mais próximo do vetor de preferência do usuário no espaço vetorial.
+\end{itemize}
+
+\section{Conclusão}
+O projeto validou com sucesso a implementação de um sistema de recomendação baseado em conteúdo utilizando a \textbf{Similaridade de Cosseno} e \textbf{TF-IDF}. O rigoroso processo de ETL e filtragem resultou em um Corpus otimizado de \textbf{30.612 títulos} consistentes e relevantes. A análise comprovou que a distância angular é uma métrica poderosa para mapear a proximidade semântica do perfil do usuário com o conteúdo fílmico, resultando em um sistema de recomendação funcional e coerente.
+
+\end{document}
