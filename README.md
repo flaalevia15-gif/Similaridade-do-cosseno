@@ -24,7 +24,7 @@ Este repositório está organizado nos seguintes arquivos principais:
 
 | Arquivo | Descrição |
 | :--- | :--- |
-| **`trabalho_algebra.ipynb`** | O código Python principal. Contém o \textbf{algoritmo completo} de ETL, preparação de texto (`remove_non_ascii`), vetorização TF-IDF, cálculo da Similaridade de Cosseno e o ranqueamento final. |
+| **`trabalho_algebra.py`** | O código Python principal. Contém o \textbf{algoritmo completo} de ETL, preparação de texto (`remove_non_ascii`), vetorização TF-IDF, cálculo da Similaridade de Cosseno e o ranqueamento final. |
 | **`DATASET_FILMES.csv`** | O arquivo CSV final resultante do processo ETL. Contém a base de dados original após todos os filtros de qualidade (nota, duração, idioma, ano) e com as *features* textuais combinadas e limpas, prontas para serem vetorizadas. |
 | **`similaridade_do_cosseno.pdf`** | O Relatório Técnico do projeto. Contém a explicação teórica detalhada (Fórmulas de Similaridade e TF-IDF), a metodologia ETL, a justificativa dos filtros e a análise dos resultados do ranking de recomendação. |
 | **`main.tex`** | O código-fonte LaTeX do Relatório Técnico. Utilizado para compilar o arquivo \texttt{similaridade\_do\_cosseno.pdf} no Overleaf. |
